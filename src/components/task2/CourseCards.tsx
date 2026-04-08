@@ -8,6 +8,7 @@ import { courseCardsData } from "./courseCardsData";
 export default function CourseCards() {
   const [activeId, setActiveId] = useState(1);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const overlayRefs = useRef<(HTMLDivElement | null)[]>([]); // refs for red overlays
   const isAnimating = useRef(false);
 
   const handleClick = (clickedId: number) => {
@@ -24,14 +25,12 @@ export default function CourseCards() {
       },
     });
 
-    // Shrink currently active card
+    // 1. Width animation (flexBasis) – same as before
     tl.to(cardRefs.current[prevIndex], {
       flexBasis: "22.5%",
       duration: 0.5,
       ease: "power3.inOut",
     });
-
-    // Expand clicked card simultaneously
     tl.to(
       cardRefs.current[nextIndex],
       {
@@ -39,6 +38,22 @@ export default function CourseCards() {
         duration: 0.5,
         ease: "power3.inOut",
       },
+      "<"
+    );
+
+    // 2. Red overlay “curve filling” effect
+    // For the new active card: reveal red from top‑right corner
+    tl.fromTo(
+      overlayRefs.current[nextIndex],
+      { clipPath: "circle(0% at 100% 0%)" },
+      { clipPath: "circle(150% at 100% 0%)", duration: 0.5, ease: "power2.out" },
+      "<" // start at the same time as width animation
+    );
+
+    // For the previously active card: hide red back into top‑right corner
+    tl.to(
+      overlayRefs.current[prevIndex],
+      { clipPath: "circle(0% at 100% 0%)", duration: 0.5, ease: "power2.in" },
       "<"
     );
   };
@@ -58,6 +73,7 @@ export default function CourseCards() {
           <CourseCard
             key={course.id}
             ref={(el) => { cardRefs.current[index] = el; }}
+            overlayRef={(el) => { overlayRefs.current[index] = el; }}
             course={course}
             isActive={course.id === activeId}
             onClick={() => handleClick(course.id)}
