@@ -25,3 +25,25 @@ export interface NewPost {
   title: string;
   body: string;
 }
+
+// src/types/index.ts
+export interface JourneyCard {
+  id: number;
+  title: string;
+  subtitle: string;
+  description: string;
+  bg: string;
+  quote: string;
+  stickers: [string, string];
+}
+
+// src/types/index.ts (append to existing)
+export interface CourseCard {
+  id: number;
+  count: string;
+  label: string;
+  sublabel: string;
+  bg: string;
+  textColor: string;
+  icons?: string[]; // only for the first card
+}

@@ -1,35 +1,47 @@
+// src/components/task2/CourseCards.tsx
 "use client";
-import { useState } from "react";
-
-const courses = [
-  {
-    id: 1,
-    count: "23",
-    label: "All Courses",
-    sublabel: "courses you're powering through right now.",
-    bg: "#D94F3D",
-    icons: ["⚛️", "💬", "🟩", "🪁"],
-  },
-  {
-    id: 2,
-    count: "05",
-    label: "Upcoming Courses",
-    sublabel: "exciting new courses waiting to boost your skills.",
-    bg: "#FAE8E6",
-    textColor: "#D94F3D",
-  },
-  {
-    id: 3,
-    count: "10",
-    label: "Ongoing Courses",
-    sublabel: "currently happening—don't miss out on the action!",
-    bg: "#FAE8E6",
-    textColor: "#D94F3D",
-  },
-];
+import { useRef, useState } from "react";
+import gsap from "gsap";
+import { CourseCard } from "./CourseCard";
+import { courseCardsData } from "./courseCardsData";
 
 export default function CourseCards() {
   const [activeId, setActiveId] = useState(1);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const isAnimating = useRef(false);
+
+  const handleClick = (clickedId: number) => {
+    if (clickedId === activeId || isAnimating.current) return;
+    isAnimating.current = true;
+
+    const prevIndex = courseCardsData.findIndex((c) => c.id === activeId);
+    const nextIndex = courseCardsData.findIndex((c) => c.id === clickedId);
+
+    const tl = gsap.timeline({
+      onComplete: () => {
+        setActiveId(clickedId);
+        isAnimating.current = false;
+      },
+    });
+
+    // Shrink currently active card
+    tl.to(cardRefs.current[prevIndex], {
+      flexBasis: "22.5%",
+      duration: 0.5,
+      ease: "power3.inOut",
+    });
+
+    // Expand clicked card simultaneously
+    tl.to(
+      cardRefs.current[nextIndex],
+      {
+        flexBasis: "55%",
+        duration: 0.5,
+        ease: "power3.inOut",
+      },
+      "<"
+    );
+  };
 
   return (
     <section className="px-6 py-10 max-w-5xl mx-auto">
@@ -42,131 +54,15 @@ export default function CourseCards() {
       </h2>
 
       <div className="flex gap-4 items-stretch h-72">
-        {courses.map((course) => {
-          const isActive = course.id === activeId;
-          const isLight = course.id !== 1;
-          const textColor = isLight ? course.textColor || "#D94F3D" : "white";
-
-          return (
-            <div
-              key={course.id}
-              onClick={() => setActiveId(course.id)}
-              className="rounded-3xl overflow-hidden cursor-pointer relative flex flex-col justify-between p-6"
-              style={{
-                backgroundColor: course.bg,
-                // Animate width: big = 55%, small = 22.5%
-                flex: isActive ? "0 0 55%" : "0 0 22.5%",
-                transition: "flex 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-                minWidth: 0,
-              }}
-            >
-              {/* TOP: icons row (only for card 1 when active) */}
-              {course.id === 1 && isActive && (
-                <div className="flex gap-2 mb-2">
-                  {course.icons?.map((icon, i) => (
-                    <span key={i} className="text-xl">
-                      {icon}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* TOP: vertical label when SMALL */}
-              {!isActive && (
-                <div className="flex-1 flex items-start overflow-hidden">
-                  <p
-                    className="font-bold text-base whitespace-nowrap"
-                    style={{
-                      color: textColor,
-                      writingMode: "vertical-rl",
-                      transform: "rotate(180deg)",
-                    }}
-                  >
-                    {course.label}
-                  </p>
-                  <p
-                    className="text-xs ml-2 leading-snug"
-                    style={{
-                      color: textColor,
-                      opacity: 0.7,
-                      writingMode: "vertical-rl",
-                      transform: "rotate(180deg)",
-                    }}
-                  >
-                    {course.sublabel}
-                  </p>
-                </div>
-              )}
-
-              {/* ACTIVE expanded content */}
-              {isActive && (
-                <div className="flex-1 flex flex-col justify-between">
-                  {/* View all link — only card 1 */}
-                  {course.id === 1 && (
-                    <div className="flex justify-end">
-                      <span
-                        className="text-sm opacity-80"
-                        style={{ color: textColor }}
-                      >
-                        View all Courses →
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="mt-auto">
-                    <div className="flex items-end gap-1">
-                      <span
-                        className="font-bold leading-none"
-                        style={{
-                          fontSize: "5rem",
-                          color: textColor,
-                        }}
-                      >
-                        {course.count}
-                      </span>
-                      <span
-                        className="font-bold text-4xl mb-3"
-                        style={{ color: textColor }}
-                      >
-                        +
-                      </span>
-                    </div>
-                    <p
-                      className="font-semibold text-lg"
-                      style={{ color: textColor }}
-                    >
-                      {course.label}
-                    </p>
-                    <p
-                      className="text-sm mt-1 opacity-70"
-                      style={{ color: textColor }}
-                    >
-                      {course.sublabel}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* SMALL: count at bottom */}
-              {!isActive && (
-                <div className="flex items-end gap-1 mt-2">
-                  <span
-                    className="font-bold leading-none"
-                    style={{ fontSize: "3.5rem", color: textColor }}
-                  >
-                    {course.count}
-                  </span>
-                  <span
-                    className="font-bold text-2xl mb-2"
-                    style={{ color: textColor }}
-                  >
-                    +
-                  </span>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {courseCardsData.map((course, index) => (
+          <CourseCard
+            key={course.id}
+            ref={(el) => { cardRefs.current[index] = el; }}
+            course={course}
+            isActive={course.id === activeId}
+            onClick={() => handleClick(course.id)}
+          />
+        ))}
       </div>
     </section>
   );
