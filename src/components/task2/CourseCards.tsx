@@ -1,85 +1,82 @@
-// src/components/task2/CourseCards.tsx
 "use client";
-import { useRef, useState } from "react";
-import gsap from "gsap";
-import { CourseCard } from "./CourseCard";
+
+import { useState, useRef, useLayoutEffect } from "react";
+import CourseCard from "./CourseCard";
 import { courseCardsData } from "./courseCardsData";
+import gsap from "gsap";
 
 export default function CourseCards() {
-  const [activeId, setActiveId] = useState(1);
+  const [expandedId, setExpandedId] = useState<number>(1);
+  const [direction, setDirection] = useState<"left" | "right">("right"); 
+
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const overlayRefs = useRef<(HTMLDivElement | null)[]>([]); // refs for red overlays
-  const isAnimating = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleClick = (clickedId: number) => {
-    if (clickedId === activeId || isAnimating.current) return;
-    isAnimating.current = true;
+  const getWidths = () => {
+    const container = containerRef.current;
+    if (!container) return [];
 
-    const prevIndex = courseCardsData.findIndex((c) => c.id === activeId);
-    const nextIndex = courseCardsData.findIndex((c) => c.id === clickedId);
+    const totalWidth = container.clientWidth;
+    const gap = 16;
+    const totalGap = gap * (courseCardsData.length - 1);
+    const availableWidth = totalWidth - totalGap;
 
-    const tl = gsap.timeline({
-      onComplete: () => {
-        setActiveId(clickedId);
-        isAnimating.current = false;
-      },
-    });
+    const unit = availableWidth / 3;
 
-    // 1. Width animation (flexBasis) – same as before
-    tl.to(cardRefs.current[prevIndex], {
-      flexBasis: "22.5%",
-      duration: 0.5,
-      ease: "power3.inOut",
-    });
-    tl.to(
-      cardRefs.current[nextIndex],
-      {
-        flexBasis: "55%",
-        duration: 0.5,
-        ease: "power3.inOut",
-      },
-      "<"
-    );
-
-    // 2. Red overlay “curve filling” effect
-    // For the new active card: reveal red from top‑right corner
-    tl.fromTo(
-      overlayRefs.current[nextIndex],
-      { clipPath: "circle(0% at 100% 0%)" },
-      { clipPath: "circle(150% at 100% 0%)", duration: 0.5, ease: "power2.out" },
-      "<" // start at the same time as width animation
-    );
-
-    // For the previously active card: hide red back into top‑right corner
-    tl.to(
-      overlayRefs.current[prevIndex],
-      { clipPath: "circle(0% at 100% 0%)", duration: 0.5, ease: "power2.in" },
-      "<"
+    return courseCardsData.map((course) =>
+      course.id === expandedId ? unit * 1 : unit * 0.5
     );
   };
 
-  return (
-    <section className="px-6 py-10 max-w-5xl mx-auto">
-      <p className="text-gray-500 text-sm mb-1">
-        Explore our classes and master trending skills!
-      </p>
-      <h2 className="text-2xl font-bold mb-8 text-gray-800">
-        Dive Into{" "}
-        <span className="text-[#2E9E6B]">What&apos;s Hot Right Now!</span> 🔥
-      </h2>
+  // initial widths
+  useLayoutEffect(() => {
+    const widths = getWidths();
+    cardRefs.current.forEach((el, i) => {
+      if (el) gsap.set(el, { width: widths[i] });
+    });
+  }, []);
 
-      <div className="flex gap-4 items-stretch h-72">
-        {courseCardsData.map((course, index) => (
+  // animate widths
+  useLayoutEffect(() => {
+    const widths = getWidths();
+    cardRefs.current.forEach((el, i) => {
+      if (el) {
+        gsap.to(el, {
+          width: widths[i],
+          duration: 0.7,
+          ease: "power3.inOut",
+        });
+      }
+    });
+  }, [expandedId]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="flex gap-4 w-full p-8 h-[500px]"
+    >
+      {courseCardsData.map((course, i) => (
+        <div
+          key={course.id}
+          ref={(el) => { cardRefs.current[i] = el; }}
+          className="shrink-0 overflow-hidden rounded-3xl"
+        >
           <CourseCard
-            key={course.id}
-            ref={(el) => { cardRefs.current[index] = el; }}
-            overlayRef={(el) => { overlayRefs.current[index] = el; }}
             course={course}
-            isActive={course.id === activeId}
-            onClick={() => handleClick(course.id)}
+            isExpanded={expandedId === course.id}
+            direction={direction} // ✅ NEW
+            onClick={() => {
+            
+              if (course.id > expandedId) {
+                setDirection("right");
+              } else {
+                setDirection("left");
+              }
+              setExpandedId(course.id);
+            }}
           />
-        ))}
-      </div>
-    </section>
+        </div>
+      ))}
+    </div>
   );
 }

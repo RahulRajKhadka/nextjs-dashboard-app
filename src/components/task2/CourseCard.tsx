@@ -1,88 +1,189 @@
-// src/components/task2/CourseCard.tsx
 "use client";
-import { forwardRef } from "react";
-import { CourseCard as CourseCardType } from "@/types";
 
-interface CourseCardProps {
+import Image from "next/image";
+import { useRef, useLayoutEffect } from "react";
+import { CourseCard as CourseCardType } from "@/types";
+import gsap from "gsap";
+
+interface Props {
   course: CourseCardType;
-  isActive: boolean;
+  isExpanded: boolean;
   onClick: () => void;
-  overlayRef?: React.RefObject<HTMLDivElement>; 
+  direction: "left" | "right"; 
 }
 
-export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
-  ({ course, isActive, onClick, overlayRef }, ref) => {
-    const bgClass = "bg-gray-100"; // always gray base background
-    const textClass = isActive ? "text-white" : "text-gray-800";
-    const mutedClass = isActive ? "text-white/70" : "text-gray-500";
-    const basisClass = isActive ? "basis-[55%]" : "basis-[22.5%]";
+export default function CourseCard({
+  course,
+  isExpanded,
+  onClick,
+  direction,
+}: Props) {
+  const numberRef = useRef<HTMLDivElement>(null);
+  const collapsedLabelRef = useRef<HTMLDivElement>(null);
+  const expandedLabelRef = useRef<HTMLDivElement>(null);
+  const iconsRef = useRef<(HTMLSpanElement | null)[]>([]);
+  const topbarRef = useRef<HTMLDivElement>(null);
+  const expandedViewRef = useRef<HTMLDivElement>(null);
 
-    return (
-      <div
-        ref={ref}
-        onClick={onClick}
-        className={`relative rounded-3xl overflow-hidden cursor-pointer flex flex-col justify-between p-6 transition-all duration-300 ${bgClass} ${textClass} ${basisClass} shrink-0 grow-0 min-w-0`}
-      >
-        {/* RED OVERLAY – animated via clip-path */}
-        <div
-          ref={overlayRef}
-          className="absolute inset-0 bg-[#D94F3D] z-0 pointer-events-none"
-          style={{ clipPath: "circle(0% at 100% 0%)" }}
-        />
+  useLayoutEffect(() => {
+    const fromX = direction === "right" ? -150 : 150;
 
-        {/* All content sits on top of the overlay */}
-        <div className="relative z-10 flex flex-col justify-between h-full">
-        
-          {course.id === 1 && isActive && course.icons && (
-            <div className="flex gap-2">
-              {course.icons.map((icon, i) => (
-                <span key={i} className="text-xl">{icon}</span>
-              ))}
-            </div>
-          )}
+    if (isExpanded) {
+      // number slides left
+      gsap.to(numberRef.current, {
+        x: -80,
+        duration: 0.6,
+        ease: "power3.inOut",
+      });
 
-          {/* Vertical label – small cards */}
-          {!isActive && (
-            <div className="flex-1 flex flex-row items-start gap-1 overflow-hidden">
-              <p className="font-bold text-base whitespace-nowrap [writing-mode:vertical-rl] rotate-180">
-                {course.label}
-              </p>
-              <p className={`text-xs whitespace-nowrap ${mutedClass} [writing-mode:vertical-rl] rotate-180`}>
-                {course.sublabel}
-              </p>
-            </div>
-          )}
+      // hide collapsed label
+      gsap.to(collapsedLabelRef.current, {
+        opacity: 0,
+        y: -20,
+        duration: 0.3,
+        ease: "power2.in",
+      });
 
-          {/* Active card content */}
-          {isActive && (
-            <div className="flex flex-col justify-end flex-1 mt-2">
-              {course.id === 1 && (
-                <div className="flex justify-end mb-2">
-                  <span className={`text-sm ${mutedClass}`}>View all Courses →</span>
-                </div>
-              )}
-              <div className="mt-auto">
-                <div className="flex items-end gap-1">
-                  <span className="font-bold leading-none text-8xl">{course.count}</span>
-                  <span className={`font-bold text-4xl mb-3 ${mutedClass}`}>+</span>
-                </div>
-                <p className="font-semibold text-lg">{course.label}</p>
-                <p className={`text-sm mt-1 ${mutedClass}`}>{course.sublabel}</p>
-              </div>
-            </div>
-          )}
+      // show expanded view
+      gsap.set(expandedViewRef.current, { display: "grid" });
 
-          {/* Count for small cards */}
-          {!isActive && (
-            <div className="flex items-end gap-1">
-              <span className="font-bold leading-none text-5xl">{course.count}</span>
-              <span className={`font-bold text-xl mb-1 ${mutedClass}`}>+</span>
-            </div>
-          )}
+      // topbar
+      gsap.fromTo(
+        topbarRef.current,
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.4, delay: 0.2 }
+      );
+
+      // 🔥 ICONS — direction based entry
+      gsap.set(iconsRef.current, { x: fromX, opacity: 0 });
+
+      iconsRef.current.forEach((icon, i) => {
+        gsap.to(icon, {
+          x: 0,
+          opacity: 1,
+          duration: 0.5,
+          ease: "power2.out",
+          delay: 0.25 + i * 0.1,
+        });
+      });
+
+      // expanded label
+      gsap.fromTo(
+        expandedLabelRef.current,
+        { x: 100, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.5, delay: 0.3 }
+      );
+    } else {
+      // reset number
+      gsap.to(numberRef.current, {
+        x: 0,
+        duration: 0.6,
+      });
+
+      // hide expanded view
+      gsap.set(expandedViewRef.current, { display: "none", delay: 0.2 });
+
+      // show collapsed label
+      gsap.to(collapsedLabelRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.3,
+        delay: 0.1,
+      });
+    }
+  }, [isExpanded, direction]);
+
+  return (
+    <div
+      onClick={onClick}
+      className="relative rounded-3xl overflow-hidden cursor-pointer h-full w-full"
+      style={{ backgroundColor: course.bg }}
+    >
+      {/* NUMBER */}
+      <div className="absolute bottom-0 left-0 right-0 z-[3] flex items-end justify-center p-4">
+        <div ref={numberRef} className="flex items-end">
+          <span
+            className="font-black leading-none"
+            style={{
+              color: course.textColor,
+              fontSize: "clamp(3.5rem,7vw,5.5rem)",
+            }}
+          >
+            {String(course.count).padStart(2, "0")}
+          </span>
+          <span
+            className="font-black text-3xl mb-2 ml-1"
+            style={{ color: course.textColor }}
+          >
+            +
+          </span>
         </div>
       </div>
-    );
-  }
-);
 
-CourseCard.displayName = "CourseCard";
+      {/* COLLAPSED */}
+      <div className="absolute inset-0 z-[2] flex items-center justify-center">
+        <div
+          ref={collapsedLabelRef}
+          className="flex flex-col gap-1"
+          style={{ transform: "rotate(-90deg)" }}
+        >
+          <span
+            className="font-bold text-[13px]"
+            style={{ color: course.textColor }}
+          >
+            {course.label}
+          </span>
+          <p
+            className="text-[11px] opacity-60"
+            style={{ color: course.textColor }}
+          >
+            {course.sublabel}
+          </p>
+        </div>
+      </div>
+
+      {/* EXPANDED */}
+      <div
+        ref={expandedViewRef}
+        className="absolute inset-0 z-[2] p-5"
+        style={{
+          display: isExpanded ? "grid" : "none",
+          gridTemplateRows: "auto 1fr auto",
+        }}
+      >
+        {/* topbar */}
+        <div ref={topbarRef} className="flex justify-end">
+          <span className="text-white/80 text-sm">
+            View all Courses →
+          </span>
+        </div>
+
+        {/* icons */}
+        <div className="flex gap-3 items-center">
+          {course.icons?.map((iconPath, i) => (
+            <span
+              key={i}
+              ref={(el) => (iconsRef.current[i] = el)}
+              className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center"
+            >
+              <Image src={iconPath} alt="" width={36} height={36} />
+            </span>
+          ))}
+        </div>
+
+        {/* bottom */}
+        <div className="flex items-end gap-4">
+          <div style={{ width: "clamp(8rem,14vw,11rem)" }} />
+          <div ref={expandedLabelRef}>
+            <span className="text-white font-bold">
+              {course.label}
+            </span>
+            <p className="text-white/70 text-xs">
+              {course.sublabel}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

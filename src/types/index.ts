@@ -37,7 +37,6 @@ export interface JourneyCard {
   stickers: [string, string];
 }
 
-// src/types/index.ts (append to existing)
 export interface CourseCard {
   id: number;
   count: string;
@@ -45,5 +44,5 @@ export interface CourseCard {
   sublabel: string;
   bg: string;
   textColor: string;
-  icons?: string[]; // only for the first card
+  icons?: string[]; // ← SVG paths as strings
 }

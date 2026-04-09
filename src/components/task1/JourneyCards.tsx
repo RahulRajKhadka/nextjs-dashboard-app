@@ -1,4 +1,3 @@
-// src/components/task1/JourneyCards.tsx
 import { JourneyCard } from "./JourneyCard";
 import { journeyCardsData } from "./JourneyCardsData";
 
@@ -17,11 +16,13 @@ export default function JourneyCards() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {journeyCardsData.map((card, index) => (
-          <JourneyCard 
-            key={card.id} 
-            card={card} 
-            hasAnimation={index < 2} 
-          />
+       
+          <div key={card.id} className=" rounded-3xl">
+            <JourneyCard
+              card={card}
+              hasAnimation={index < 2}
+            />
+          </div>
         ))}
       </div>
     </section>
