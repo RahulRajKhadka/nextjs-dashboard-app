@@ -3,7 +3,7 @@ import { journeyCardsData } from "./JourneyCardsData";
 
 export default function JourneyCards() {
   return (
-    <section className="px-6 py-10 max-w-5xl mx-auto mt-8">
+    <section className="px-6 py-10  mx-auto mt-8">
       <p className="text-gray-500 text-sm mb-1">Your SkillShikshya Journey</p>
       <h2 className="text-3xl font-bold mb-10">
         <span className="text-[#2E9E6B]">Step</span>{" "}

@@ -1,5 +1,6 @@
 "use client";
-import { useRef } from "react";
+import Image from "next/image";
+import { useRef, useEffect, useCallback } from "react";
 import gsap from "gsap";
 import { JourneyCard as JourneyCardType } from "@/types";
 
@@ -8,6 +9,74 @@ interface JourneyCardProps {
   hasAnimation?: boolean;
 }
 
+// ─── Notched card wrapper ───────────────────────────────────────────
+function NotchedCard({
+  bg,
+  children,
+}: {
+  bg: string;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const updateClip = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const W = el.offsetWidth;
+    const H = el.offsetHeight;
+
+    const r  = 20;
+    const nr = 72;
+    const ns = 45;
+    const sm = 3;
+    const ny = H / 2;
+    const fl = 24;
+
+    const path = [
+      `M ${r} 0`,
+      `L ${W - r} 0`,
+      `Q ${W} 0 ${W} ${r}`,
+      `L ${W} ${ny - ns - fl}`,
+      `Q ${W} ${ny - ns} ${W - fl} ${ny - ns}`,
+      `C ${W - fl} ${ny - ns + sm}  ${W - nr} ${ny - ns + sm}  ${W - nr} ${ny}`,
+      `C ${W - nr} ${ny + ns - sm}  ${W - fl} ${ny + ns - sm}  ${W - fl} ${ny + ns}`,
+      `Q ${W} ${ny + ns} ${W} ${ny + ns + fl}`,
+      `L ${W} ${H - r}`,
+      `Q ${W} ${H} ${W - r} ${H}`,
+      `L ${r} ${H}`,
+      `Q 0 ${H} 0 ${H - r}`,
+      `L 0 ${ny + ns + fl}`,
+      `Q 0 ${ny + ns} ${fl} ${ny + ns}`,
+      `C ${fl} ${ny + ns - sm}  ${nr} ${ny + ns - sm}  ${nr} ${ny}`,
+      `C ${nr} ${ny - ns + sm}  ${fl} ${ny - ns + sm}  ${fl} ${ny - ns}`,
+      `Q 0 ${ny - ns} 0 ${ny - ns - fl}`,
+      `L 0 ${r}`,
+      `Q 0 0 ${r} 0`,
+      `Z`,
+    ].join(" ");
+
+    el.style.clipPath = `path('${path}')`;
+  }, []);
+
+  useEffect(() => {
+    updateClip();
+    const ro = new ResizeObserver(updateClip);
+    if (ref.current) ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, [updateClip]);
+
+  return (
+    <div
+      ref={ref}
+      className="absolute inset-0"
+      style={{ backgroundColor: bg, borderRadius: 24 }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ─── Main component ─────────────────────────────────────────────────
 export function JourneyCard({ card, hasAnimation = true }: JourneyCardProps) {
   const frontRef = useRef<HTMLDivElement>(null);
   const tweenRef = useRef<gsap.core.Tween | null>(null);
@@ -15,20 +84,17 @@ export function JourneyCard({ card, hasAnimation = true }: JourneyCardProps) {
   const handleMouseEnter = () => {
     if (!hasAnimation) return;
     tweenRef.current?.kill();
-
     tweenRef.current = gsap.to(frontRef.current, {
       x: "-100%",
       opacity: 0,
       duration: 1.2,
-      ease: "none", // perfectly linear — fade matches movement 1:1
+      ease: "none",
     });
   };
 
   const handleMouseLeave = () => {
     if (!hasAnimation) return;
     tweenRef.current?.kill();
-
-    // Reverse from exactly where it currently is
     tweenRef.current = gsap.to(frontRef.current, {
       x: "0%",
       opacity: 1,
@@ -38,54 +104,107 @@ export function JourneyCard({ card, hasAnimation = true }: JourneyCardProps) {
   };
 
   return (
-    // No overflow:hidden — card travels freely
     <div
-      className="relative rounded-3xl min-h-[280px] cursor-pointer"
-      style={{ backgroundColor: card.bg }}
+      className="relative rounded-3xl h-[200px] md:h-[220px] lg:h-[250px] cursor-pointer overflow-visible"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* BACK — always sitting in place, never moves */}
-      <div
-        className="absolute inset-0 flex items-center"
-        style={{ zIndex: 1 }}
-      >
-        <div className="absolute inset-0 bg-[url('/images/clarityback.svg')] bg-cover bg-center" />
+      {/* ================= BACK ================= */}
+      <div className="absolute px-10 w-full inset-0" style={{ zIndex: 1 }}>
 
-        <button className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center text-gray-700 hover:bg-gray-100 z-20">
-          ←
+        {/* LEFT ARROW BUTTON */}
+        <button
+          className="absolute left-7 top-1/2 -translate-y-1/2 -translate-x-1/2
+                     w-[44px] h-[44px] sm:w-[52px] sm:h-[52px] md:w-[60px] md:h-[60px]
+                     rounded-full bg-white shadow-lg
+                     flex items-center justify-center hover:bg-gray-100 z-30"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7"
+            fill="none"
+            stroke="#1a1a2e"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
         </button>
-        <button className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center text-gray-700 hover:bg-gray-100 z-20">
-          →
+
+        {/* RIGHT ARROW BUTTON */}
+        <button
+          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2
+                     w-[44px] h-[44px] sm:w-[52px] sm:h-[52px] md:w-[60px] md:h-[60px]
+                     rounded-full bg-white shadow-lg
+                     flex items-center justify-center hover:bg-gray-100 z-30"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7"
+            fill="none"
+            stroke="#1a1a2e"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </button>
 
-        <div className="flex-shrink-0 w-[45%] h-full flex items-end justify-center overflow-hidden relative z-10">
-          <img
-            src="/images/doing.svg"
-            alt="visual"
-            className="h-full object-contain opacity-90"
-          />
-        </div>
+        <NotchedCard bg={card.bg}>
 
-        <div className="absolute top-4 left-16 w-14 h-14 rounded-full bg-white flex items-center justify-center text-2xl shadow-sm z-20">
-          {card.stickers[0]}
-        </div>
-        <div className="absolute bottom-4 left-[40%] w-14 h-14 rounded-full bg-white flex items-center justify-center text-2xl shadow-sm z-20">
-          {card.stickers[1]}
-        </div>
+          {/* TOP LEFT WOW ICON */}
+          <div className="absolute top-[6%] left-[4%] z-20 rotate-[-10deg]">
+            <Image
+              src="/images/wowicon.svg"
+              alt="wow"
+              width={80}
+              height={80}
+              className="w-8 sm:w-10 md:w-12 lg:w-16 h-auto"
+            />
+          </div>
 
-        <div className="flex-1 px-6 py-8 relative z-10">
-          <p className="text-white font-bold text-xl leading-snug">
-            {card.quote}
-          </p>
-        </div>
+          {/* BOTTOM RIGHT WOW ICON */}
+          <div className="absolute bottom-[6%] right-[5%] z-20 rotate-[15deg]">
+            <Image
+              src="/images/wowicon.svg"
+              alt="wow"
+              width={80}
+              height={80}
+              className="w-8 sm:w-10 md:w-12 lg:w-16 h-auto"
+            />
+          </div>
+
+          {/* MAIN CONTENT: image + quote side by side */}
+          <div className="relative flex items-end h-full z-10">
+
+            {/* PERSON / ILLUSTRATION IMAGE */}
+            <div className="shrink-0 flex items-end pl-4 sm:pl-6 md:pl-8">
+              <img
+                src="/images/clarityback.svg"
+                alt="illustration"
+                className="h-28 sm:h-36 md:h-44 lg:h-52 object-contain"
+              />
+            </div>
+
+            {/* QUOTE TEXT */}
+            <div className="flex-1 flex items-center h-full px-3 sm:px-4 md:px-6 pb-4">
+              <p className="text-white font-bold text-xs sm:text-sm md:text-base leading-snug">
+                {card.quote}
+              </p>
+            </div>
+
+          </div>
+
+        </NotchedCard>
       </div>
 
-      {/* FRONT — slides left + fades freely on hover */}
+      {/* ================= FRONT (hover reveal) ================= */}
       <div
         ref={frontRef}
-        className="absolute inset-0 p-8 flex items-center gap-6"
-        style={{ zIndex: 2, backgroundColor: card.bg }}
+        className="absolute inset-0 p-6 sm:p-7 md:p-8 flex items-center gap-4 sm:gap-5 md:gap-6 rounded-3xl"
+        style={{ zIndex: 40, backgroundColor: card.bg }}
       >
         <div className="w-[40%] flex justify-center items-center">
           <img
@@ -95,17 +214,21 @@ export function JourneyCard({ card, hasAnimation = true }: JourneyCardProps) {
           />
         </div>
         <div className="w-[60%]">
-          <h3 className="text-white text-2xl font-bold mb-2">
+          <h3 className="text-white font-bold leading-tight
+                         text-lg sm:text-xl md:text-2xl mb-1 sm:mb-2">
             {card.title}
           </h3>
-          <p className="text-white text-base font-medium opacity-90 mb-3">
+          <p className="text-white font-medium opacity-90
+                        text-xs sm:text-sm md:text-base mb-2 sm:mb-3">
             {card.subtitle}
           </p>
-          <p className="text-white text-sm opacity-80 leading-relaxed">
+          <p className="text-white opacity-80 leading-relaxed
+                        text-xs sm:text-sm">
             {card.description}
           </p>
         </div>
       </div>
+
     </div>
   );
 }

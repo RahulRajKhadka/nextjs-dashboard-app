@@ -6,8 +6,9 @@ export const courseCardsData: CourseCard[] = [
     count: "23",
     label: "All Courses",
     sublabel: "courses you're powering through right now.",
-    bg: "#D94F3D",
-    textColor: "white",
+    bg: "#F9E8E7",        // ← was "#D94F3D", should be light pink
+    textColor: "#D94F3D",  // ← was "white", red for collapsed state
+    bgExpanded: "#D94F3D",
     icons: ["/images/react.svg", "/images/likes.svg", "/images/design.svg", "/images/view.svg"],
   },
   {
@@ -17,6 +18,7 @@ export const courseCardsData: CourseCard[] = [
     sublabel: "exciting new courses waiting to boost your skills.",
     bg: "#F9E8E7",
     textColor: "#D94F3D",
+    bgExpanded: "#D94F3D",
     icons: ["/images/react.svg", "/images/likes.svg", "/images/design.svg", "/images/view.svg"],
   },
   {
@@ -26,6 +28,7 @@ export const courseCardsData: CourseCard[] = [
     sublabel: "currently happening—don't miss out on the action!",
     bg: "#F9E8E7",
     textColor: "#D94F3D",
+    bgExpanded: "#D94F3D",
     icons: ["/images/react.svg", "/images/likes.svg", "/images/design.svg", "/images/view.svg"],
   },
 ];

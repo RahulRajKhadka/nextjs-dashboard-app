@@ -44,5 +44,6 @@ export interface CourseCard {
   sublabel: string;
   bg: string;
   textColor: string;
-  icons?: string[]; // ← SVG paths as strings
+  icons?: string[];
+  bgExpanded: string; // ← SVG paths as strings
 }
