@@ -34,7 +34,7 @@ export default function PostForm({ userId }: PostFormProps) {
     if (!result.success) {
       const fieldErrors: Partial<NewPostFormData> = {};
 
-      result.error.errors.forEach((err) => {
+      result.error.issues.forEach((err) => {
         const field = err.path[0] as keyof NewPostFormData;
         fieldErrors[field] = err.message;
       });
