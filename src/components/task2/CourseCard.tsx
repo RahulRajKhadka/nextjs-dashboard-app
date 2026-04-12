@@ -12,6 +12,7 @@ interface Props {
   isLeftmost?: boolean;
   setLabelRef: (el: HTMLDivElement | null) => void;
   setNumberRef: (el: HTMLDivElement | null) => void;
+  setIconsRef: (els: (HTMLSpanElement | null)[]) => void;
 }
 
 export default function CourseCard({
@@ -21,6 +22,7 @@ export default function CourseCard({
   isLeftmost = false,
   setLabelRef,
   setNumberRef,
+  setIconsRef,
 }: Props) {
   const numberRef = useRef<HTMLDivElement>(null);
   const collapsedLabelRef = useRef<HTMLDivElement>(null);
@@ -35,6 +37,10 @@ export default function CourseCard({
   }, [setLabelRef, setNumberRef]);
 
   useLayoutEffect(() => {
+    setIconsRef(iconsRef.current);
+  }, [isExpanded, setIconsRef]);
+
+  useLayoutEffect(() => {
     if (!numberRef.current || !circleRef.current) return;
 
     if (isExpanded) {
@@ -43,7 +49,7 @@ export default function CourseCard({
 
       tl.to(circleRef.current, {
         clipPath: "circle(0% at 0% 100%)",
-        duration: 0.6,
+        duration: 1,
         ease: "power3.inOut",
       }, 0);
 
@@ -52,7 +58,6 @@ export default function CourseCard({
         duration: 0.3,
       }, 0.2);
 
-      // Topbar always slides in from right, no direction needed
       tl.fromTo(
         topbarRef.current,
         { opacity: 0, x: 40 },
@@ -60,15 +65,21 @@ export default function CourseCard({
         0.3
       );
 
-      // Icons slide in from right always
       gsap.set(iconsRef.current, { x: 60, opacity: 0 });
       iconsRef.current.forEach((icon, i) => {
+        tl.to(icon, {
+          x: 80,
+          opacity: 0.3,
+          duration: 0.12,
+          ease: "power1.in",
+        }, 0.35 + i * 0.08);
+
         tl.to(icon, {
           x: 0,
           opacity: 1,
           duration: 0.4,
           ease: "power2.out",
-        }, 0.35 + i * 0.08);
+        }, 0.47 + i * 0.08);
       });
 
     } else {
@@ -109,7 +120,12 @@ export default function CourseCard({
         <div
           ref={collapsedLabelRef}
           className="flex flex-col gap-1"
-          style={{ color: course.textColor, maxWidth: "220px", width: "max-content" }}
+          style={{
+            color: course.textColor,
+            maxWidth: "220px",
+            width: "max-content",
+            transformOrigin: isExpanded ? "left center" : "bottom center",
+          }}
         >
           <span className="font-bold text-[20px]">{course.label}</span>
           <p className="text-[15px] opacity-60">{course.sublabel}</p>
@@ -122,11 +138,16 @@ export default function CourseCard({
         className="absolute bottom-0 left-10 z-[3] pb-6 pl-6 pointer-events-none"
         style={{ color: course.textColor }}
       >
-        <div className="flex items-end">
-          <span className="font-black leading-none" style={{ fontSize: "clamp(3.5rem,7vw,5.5rem)" }}>
+        <div className="relative inline-block">
+          <span
+            className="font-black leading-none"
+            style={{ fontSize: "clamp(3.5rem,7vw,5.5rem)" }}
+          >
             {String(course.count).padStart(2, "0")}
           </span>
-          <span className="font-black text-3xl mb-2 ml-1">+</span>
+          <span className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 font-black text-2xl">
+            +
+          </span>
         </div>
       </div>
 
@@ -145,7 +166,9 @@ export default function CourseCard({
           {course.icons?.map((iconPath, i) => (
             <span
               key={i}
-              ref={(el) => (iconsRef.current[i] = el)}
+              ref={(el) => {
+                iconsRef.current[i] = el;
+              }}
               className="w-14 h-14 rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg"
             >
               <Image src={iconPath} alt="" width={32} height={32} className="opacity-80" />
