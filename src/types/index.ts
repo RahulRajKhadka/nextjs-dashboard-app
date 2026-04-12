@@ -41,9 +41,22 @@ export interface JourneyCard {
   subtitle: string;
   description: string;
   bg: string;
-  quote: string;
   stickers: [string, string];
+  styles?: any
+  slides?: Slide[];
+  illustration?: string; // ← Optional field for SVG paths or image URLs
 }
+
+export interface Slide {
+  text: string;
+  textStyle: any;
+  image: string;
+  imageStyle: any;
+  stickers: any[];
+}
+
+
+
 
 export interface CourseCard {
   id: number;

@@ -24,15 +24,17 @@ export default function CourseCards() {
 
     const labelRect = label.getBoundingClientRect();
     const numberRect = number.getBoundingClientRect();
-    const gap = 16;
 
-    const targetX = numberRect.right + gap - (labelRect.left + labelRect.width / 2);
-    const targetY = (numberRect.top + numberRect.height / 2) - (labelRect.top + labelRect.height / 2);
+    const targetX =
+      numberRect.right + 16 - (labelRect.left + labelRect.width / 2);
+    const targetY =
+      numberRect.top + numberRect.height / 2 -
+      (labelRect.top + labelRect.height / 2);
 
     return { label, targetX, targetY };
   };
 
-  // 1. Sets card widths
+  // calculate dynamic widths based on container
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -41,6 +43,7 @@ export default function CourseCards() {
     const gap = 16;
     const totalGap = gap * (courseCardsData.length - 1);
     const unit = (totalWidth - totalGap) / courseCardsData.length;
+
     expandedWidth.current = unit * 1.4;
     collapsedWidth.current = unit * 0.6;
 
@@ -56,18 +59,29 @@ export default function CourseCards() {
     });
   }, []);
 
-  // 2. Initial label setup
+  // initial label positioning (collapsed → rotated, expanded → visible)
   useLayoutEffect(() => {
     courseCardsData.forEach((course) => {
       const label = labelElements.current.get(course.id);
       if (label) {
-        gsap.set(label, { rotation: -90, x: 0, y: 0, color: course.textColor });
+        gsap.set(label, {
+          rotation: -90,
+          x: 0,
+          y: 0,
+          color: course.textColor,
+        });
       }
     });
 
     const pos = getLabelPosition(1);
     if (!pos) return;
-    gsap.set(pos.label, { rotation: 0, x: 80, y: 180, color: "#ffffff" });
+
+    gsap.set(pos.label, {
+      rotation: 0,
+      x: 40,
+      y: 180,
+      color: "#ffffff",
+    });
   }, []);
 
   const setLabelRef = (id: number) => (el: HTMLDivElement | null) => {
@@ -87,8 +101,13 @@ export default function CourseCards() {
   const handleClick = (courseId: number) => {
     if (courseId === expandedId || isAnimating.current) return;
 
-    const prevIndex = courseCardsData.findIndex((c) => c.id === expandedId);
-    const newIndex = courseCardsData.findIndex((c) => c.id === courseId);
+    const prevIndex = courseCardsData.findIndex(
+      (c) => c.id === expandedId
+    );
+    const newIndex = courseCardsData.findIndex(
+      (c) => c.id === courseId
+    );
+
     const newCourse = courseCardsData[newIndex];
 
     const oldLabel = labelElements.current.get(expandedId);
@@ -101,9 +120,9 @@ export default function CourseCards() {
 
     isAnimating.current = true;
 
-    const PRE_PHASE = 3;
-    const shrinkBy = collapsedWidth.current * 0.85;
-    const growBy = expandedWidth.current * 1.08;
+    const PRE_PHASE = 1;
+    const shrinkBy = collapsedWidth.current * 0.82;
+    const growBy = expandedWidth.current * 1.1;
 
     const tl = gsap.timeline({
       onComplete: () => {
@@ -111,156 +130,99 @@ export default function CourseCards() {
       },
     });
 
-    // ── PRE-PHASE (0 → 3s) ────────────────────────────────────────
+    // pre-animation phase (anticipation + motion setup)
+    tl.to(newLabel, {
+      rotation: -100,
+      duration: PRE_PHASE,
+      ease: "power1.inOut",
+    }, 0);
 
-    // 1. Clicked collapsed card label: bottom pivot, tips further left to -105deg
-    tl.to(
-      newLabel,
-      {
-        rotation: -105,
-        duration: PRE_PHASE,
-        ease: "power1.inOut",
-      },
-      0
-    );
-
-    // 2. Expanded card label: left pivot, right side droops down to 10deg
     if (oldLabel) {
-      tl.to(
-        oldLabel,
-        {
-          rotation: 10,
-          duration: PRE_PHASE,
-          ease: "power1.inOut",
-        },
-        0
-      );
+      tl.to(oldLabel, {
+        rotation: 5,
+        duration: PRE_PHASE,
+        ease: "back.inOut(1.5)",
+      }, 0);
     }
 
-    // 3. Expanded card icons: nudge right
     if (oldIcons.length > 0) {
       oldIcons.forEach((icon, i) => {
         if (!icon) return;
-        tl.to(
-          icon,
-          {
-            x: 40,
-            duration: PRE_PHASE,
-            ease: "power1.inOut",
-          },
-          i * 0.08
-        );
+        tl.to(icon, {
+          x: 40,
+          duration: PRE_PHASE * 0.8,
+          ease: "back.out(2)",
+        }, i * 0.06);
       });
     }
 
-    // 4. Clicked card: shrinks a little during pre-phase
-    tl.to(
-      cardRefs.current[newIndex],
-      {
-        width: shrinkBy,
-        duration: PRE_PHASE,
-        ease: "power1.inOut",
-      },
-      0
-    );
+    tl.to(cardRefs.current[newIndex], {
+      width: shrinkBy,
+      duration: PRE_PHASE,
+      ease: "back.inOut(1.5)",
+    }, 0);
 
-    // 5. Old expanded card: grows a little during pre-phase
-    tl.to(
-      cardRefs.current[prevIndex],
-      {
-        width: growBy,
-        duration: PRE_PHASE,
-        ease: "power1.inOut",
-      },
-      0
-    );
+    tl.to(cardRefs.current[prevIndex], {
+      width: growBy,
+      duration: PRE_PHASE,
+      ease: "back.inOut(1.5)",
+    }, 0);
 
-    // ── MAIN PHASE (starts at PRE_PHASE = 3s) ─────────────────────
-
-    // Update React state
+    // main animation phase (state switch + final positions)
     tl.call(() => setExpandedId(courseId), [], PRE_PHASE);
 
-    // Clicked card: from shrinkBy → expandedWidth
-    tl.to(
-      cardRefs.current[newIndex],
-      {
-        width: expandedWidth.current,
-        duration: 0.6,
-        ease: "power3.out",
-      },
-      PRE_PHASE
-    );
+    tl.to(cardRefs.current[newIndex], {
+      width: expandedWidth.current,
+      duration: 0.7,
+      ease: "back.out(1.8)",
+    }, PRE_PHASE);
 
-    // Old card: from growBy → collapsedWidth
-    tl.to(
-      cardRefs.current[prevIndex],
-      {
-        width: collapsedWidth.current,
-        duration: 0.6,
-        ease: "power3.out",
-      },
-      PRE_PHASE
-    );
+    tl.to(cardRefs.current[prevIndex], {
+      width: collapsedWidth.current,
+      duration: 0.7,
+      ease: "back.out(1.8)",
+    }, PRE_PHASE);
 
-    // Old label: reset rotation and position back to vertical
     if (oldLabel) {
-      tl.to(
-        oldLabel,
-        {
-          rotation: -90,
-          x: 0,
-          y: 0,
-          color: newCourse.textColor,
-          duration: 0.5,
-          ease: "power2.inOut",
-        },
-        PRE_PHASE
-      );
+      tl.to(oldLabel, {
+        rotation: -90,
+        x: 0,
+        y: 0,
+        color: newCourse.textColor,
+        duration: 0.6,
+        ease: "back.out(2)",
+      }, PRE_PHASE);
     }
 
-    // Old icons: reset x before collapse clears them
     if (oldIcons.length > 0) {
       tl.set(oldIcons, { x: 0 }, PRE_PHASE);
     }
 
-    // Old number color fades
     if (oldNumber) {
-      tl.to(
-        oldNumber,
-        {
-          color: newCourse.textColor,
-          duration: 0.3,
-        },
-        PRE_PHASE
-      );
+      tl.to(oldNumber, {
+        color: newCourse.textColor,
+        duration: 0.4,
+        ease: "power2.out",
+      }, PRE_PHASE);
     }
 
-    // New label: swings from -105deg into expanded horizontal position
     const pos = getLabelPosition(courseId);
     if (pos) {
-      tl.to(
-        newLabel,
-        {
-          rotation: 0,
-          x: pos.targetX,
-          y: pos.targetY,
-          color: "#ffffff",
-          duration: 0.5,
-          ease: "back.out(0.3)",
-        },
-        PRE_PHASE + 0.25
-      );
+      tl.to(newLabel, {
+        rotation: 0,
+        x: 40,
+        y: 180,
+        color: "#ffffff",
+        duration: 0.7,
+        ease: "power3.out",
+      }, PRE_PHASE + 0.15);
     }
 
-    // New number color to white
-    tl.to(
-      newNumber,
-      {
-        color: "#ffffff",
-        duration: 0.3,
-      },
-      PRE_PHASE + 0.2
-    );
+    tl.to(newNumber, {
+      color: "#ffffff",
+      duration: 0.4,
+      ease: "power2.out",
+    }, PRE_PHASE + 0.15);
   };
 
   return (

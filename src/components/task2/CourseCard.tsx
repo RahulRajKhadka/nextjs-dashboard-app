@@ -60,8 +60,8 @@ export default function CourseCard({
 
       tl.fromTo(
         topbarRef.current,
-        { opacity: 0, x: 40 },
-        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" },
+        { opacity: 0, x:60,y:40 },
+        { opacity: 1, x: -40, duration: 0.4, ease: "power2.out" },
         0.3
       );
 
@@ -105,7 +105,7 @@ export default function CourseCard({
   return (
     <div
       onClick={onClick}
-      className="relative rounded-3xl overflow-hidden cursor-pointer h-full w-full"
+      className="relative rounded-3xl  overflow-hidden cursor-pointer h-full w-full"
       style={{ backgroundColor: course.bgExpanded }}
     >
       {/* Background circle */}
@@ -122,7 +122,7 @@ export default function CourseCard({
           className="flex flex-col gap-1"
           style={{
             color: course.textColor,
-            maxWidth: "220px",
+            maxWidth: "210px",
             width: "max-content",
             transformOrigin: isExpanded ? "left center" : "bottom center",
           }}
@@ -154,10 +154,10 @@ export default function CourseCard({
       {/* Expanded view */}
       <div
         ref={expandedViewRef}
-        className="absolute inset-0 z-[2] p-5"
+        className="absolute inset-0 z-[2] p-8"
         style={{ display: isExpanded ? "grid" : "none", gridTemplateRows: "auto 1fr auto" }}
       >
-        <div ref={topbarRef} className="flex justify-end mt-40 opacity-0">
+        <div ref={topbarRef} className="flex justify-end top-10 right-10 opacity-0">
           <span className="text-white/80 text-sm font-medium tracking-wide">
             View all Courses →
           </span>

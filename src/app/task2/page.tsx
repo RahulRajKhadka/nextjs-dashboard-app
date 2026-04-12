@@ -32,16 +32,21 @@ export default function Task2Page() {
       {/* Centered Content */}
       <div className="flex-1 flex items-center justify-center px-4 py-10">
         
-        <div className="w-full max-w-6xl">
+        <div className="w-full max-w-7xl">
           
           {/* Heading */}
           <div className="mb-8 text-center mt-10">
-            <h1 className="text-3xl font-bold text-gray-800">
-              Explore Courses
-            </h1>
-            <p className="text-gray-500 text-sm mt-2">
-              Choose a category to view available learning paths
-            </p>
+          <p className="text-[#414141] text-sm mb-1">Your SkillShikshya Journey</p>
+      <h2
+        className="text-3xl font-bold"
+        style={{ marginTop: "24px", marginBottom: "48px " }}
+      >
+        <span className="text-[#2E9E6B]"></span>{" "}
+        <span className="text-gray-800">Dive Into</span>{" "}
+        <span className="text-[#2E9E6B]">What's Hot Right Now 🔥</span>{" "}
+        
+      </h2>
+
           </div>
 
           {/* Cards */}
