@@ -13,6 +13,7 @@ interface Props {
   isLeftmost?: boolean;
   setLabelRef: (el: HTMLDivElement | null) => void;
   setNumberRef: (el: HTMLDivElement | null) => void;
+  shouldAnimate:boolean;
 }
 
 export default function CourseCard({
@@ -37,12 +38,11 @@ export default function CourseCard({
     setNumberRef(numberRef.current);
   }, [setLabelRef, setNumberRef]);
 
-  // Internal animations (circle, number colour, topbar, icons) – label is handled by parent
+  
   useLayoutEffect(() => {
     if (!numberRef.current || !circleRef.current) return;
 
     if (isExpanded) {
-
       
       const tl = gsap.timeline();
       gsap.set(expandedViewRef.current, { display: "grid" });
@@ -58,14 +58,16 @@ export default function CourseCard({
         duration: 0.3,
       }, 0.2);
 
-     if (direction === "left") {
+   if (direction === "right") {
+  
+  tl.to(topbarRef.current, { opacity: 1, x: 0, duration: 0.4 }, 0.3);
+} else {
+
   tl.fromTo(topbarRef.current,
-    { opacity: 0, x: 60 },
-    { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" },
+    { opacity: 1, x: 200 },  
+    { opacity: 1, x: 0, duration: 0.6, ease: "power2.out" }, 
     0.3
   );
-} else {
-  gsap.set(topbarRef.current, { opacity: 1, x: 0 });
 }
 
       const iconsFromX = direction === "left" ? 120 : -120;
@@ -116,7 +118,8 @@ export default function CourseCard({
   <div
     ref={collapsedLabelRef}
     className="flex flex-col gap-1"
-    style={{ transform: "rotate(-90deg)", color: course.textColor }}
+    style={{ color: course.textColor , maxWidth: "220px",      
+    width: "max-content" }}
   >
     <span className="font-bold text-[20px] ">{course.label}</span>
     <p className="text-[15px] opacity-60 ">{course.sublabel}</p>

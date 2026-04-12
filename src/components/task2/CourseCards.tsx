@@ -13,6 +13,26 @@ export default function CourseCards() {
   const collapsedWidth = useRef(0);
   const isAnimating = useRef(false);
 
+  const labelElements = useRef<Map<number, HTMLDivElement>>(new Map());
+  const numberElements = useRef<Map<number, HTMLDivElement>>(new Map());
+
+  // Reusable label position calculator
+  const getLabelPosition = (courseId: number) => {
+    const label = labelElements.current.get(courseId);
+    const number = numberElements.current.get(courseId);
+    if (!label || !number) return null;
+
+    const labelRect = label.getBoundingClientRect();
+    const numberRect = number.getBoundingClientRect();
+    const gap = 16;
+
+    const targetX = numberRect.right + gap - (labelRect.left + labelRect.width / 2);
+    const targetY = (numberRect.top + numberRect.height / 2) - (labelRect.top + labelRect.height / 2);
+
+    return { label, targetX, targetY };
+  };
+
+  // 1. Sets card widths
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -35,10 +55,20 @@ export default function CourseCards() {
       }
     });
   }, [expandedId]);
+useLayoutEffect(() => {
+  
+  courseCardsData.forEach((course) => {
+    const label = labelElements.current.get(course.id);
+    if (label) {
+      gsap.set(label, { rotation: -90, x: 0, y: 0, color: course.textColor });
+    }
+  });
 
-  const labelElements = useRef<Map<number, HTMLDivElement>>(new Map());
-  const numberElements = useRef<Map<number, HTMLDivElement>>(new Map());
-
+  // Then set expanded card label to expanded state
+  const pos = getLabelPosition(1);
+  if (!pos) return;
+  gsap.set(pos.label, { rotation: 0, x:80, y:180, color: "#ffffff" });
+}, []);
   const setLabelRef = (id: number) => (el: HTMLDivElement | null) => {
     if (el) labelElements.current.set(id, el);
     else labelElements.current.delete(id);
@@ -52,12 +82,8 @@ export default function CourseCards() {
   const handleClick = (courseId: number) => {
     if (courseId === expandedId || isAnimating.current) return;
 
-    const prevIndex = courseCardsData.findIndex(
-      (c) => c.id === expandedId
-    );
-    const newIndex = courseCardsData.findIndex(
-      (c) => c.id === courseId
-    );
+    const prevIndex = courseCardsData.findIndex((c) => c.id === expandedId);
+    const newIndex = courseCardsData.findIndex((c) => c.id === courseId);
     const newCourse = courseCardsData[newIndex];
 
     const oldLabel = labelElements.current.get(expandedId);
@@ -75,6 +101,7 @@ export default function CourseCards() {
       },
     });
 
+    
     tl.to(
       cardRefs.current[prevIndex],
       {
@@ -85,6 +112,7 @@ export default function CourseCards() {
       0
     );
 
+    
     if (oldLabel) {
       tl.to(
         oldLabel,
@@ -100,6 +128,7 @@ export default function CourseCards() {
       );
     }
 
+    
     if (oldNumber) {
       tl.to(
         oldNumber,
@@ -115,6 +144,7 @@ export default function CourseCards() {
       setExpandedId(courseId);
     }, null, 0.25);
 
+    
     tl.to(
       cardRefs.current[newIndex],
       {
@@ -125,40 +155,30 @@ export default function CourseCards() {
       0.25
     );
 
-    const labelRect = newLabel.getBoundingClientRect();
-    const numberRect = newNumber.getBoundingClientRect();
-    const gap = 16;
+    
+    const pos = getLabelPosition(courseId);
+    if (pos) {
+      tl.fromTo(
+        pos.label,
+        {
+          rotation: -90,
+          x: 0,
+          y: 0,
+          color: newCourse.textColor,
+        },
+        {
+          rotation: 0,
+          x: pos.targetX,
+          y: pos.targetY,
+          color: "#ffffff",
+          duration: 0.5,
+          ease: "back.out(0.3)",
+        },
+        0.25
+      );
+    }
 
-    const targetX =
-      numberRect.right +
-      gap -
-      (labelRect.left + labelRect.width / 2);
-    const targetY =
-      numberRect.top +
-      numberRect.height / 2 -
-      (labelRect.top + labelRect.height / 2);
-
-    tl.fromTo(
-      newLabel,
-      {
-        rotation: -90,
-        x: 0,
-        y: 0,
-        color: newCourse.textColor,
-        width:"auto",
-        maxWidth:"220px"
-      },
-      {
-        rotation: 0,
-        x: targetX,
-        y: targetY,
-        color: "#ffffff",
-        duration: 0.5,
-        ease: "back.out(0.3)",
-      },
-      0.25
-    );
-
+    
     tl.to(
       newNumber,
       {
@@ -172,7 +192,7 @@ export default function CourseCards() {
   return (
     <div
       ref={containerRef}
-      className="flex gap-4 box-border w-full my-8 min-h-[200px] md:min-h-[200px] lg:min-h-[400px]"
+      className="flex gap-4 box-border w-full my-8 h-[400px]"
     >
       {courseCardsData.map((course, i) => (
         <div
@@ -180,12 +200,11 @@ export default function CourseCards() {
           ref={(el) => {
             cardRefs.current[i] = el;
           }}
-          className="shrink-0 overflow-hidden my-auto rounded-3xl"
+          className="shrink-0 overflow-hidden my-auto rounded-3xl h-[350px]"
         >
           <CourseCard
             course={course}
             isExpanded={expandedId === course.id}
-            direction={i === 0 ? "right" : "left"}
             isLeftmost={i === 0}
             onClick={() => handleClick(course.id)}
             setLabelRef={setLabelRef(course.id)}
@@ -195,4 +214,4 @@ export default function CourseCards() {
       ))}
     </div>
   );
-}
+} 
