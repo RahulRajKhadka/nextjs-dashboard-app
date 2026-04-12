@@ -16,7 +16,6 @@ export default function CourseCards() {
   const labelElements = useRef<Map<number, HTMLDivElement>>(new Map());
   const numberElements = useRef<Map<number, HTMLDivElement>>(new Map());
 
-  // Reusable label position calculator
   const getLabelPosition = (courseId: number) => {
     const label = labelElements.current.get(courseId);
     const number = numberElements.current.get(courseId);
@@ -54,21 +53,22 @@ export default function CourseCards() {
         });
       }
     });
-  }, [expandedId]);
-useLayoutEffect(() => {
-  
-  courseCardsData.forEach((course) => {
-    const label = labelElements.current.get(course.id);
-    if (label) {
-      gsap.set(label, { rotation: -90, x: 0, y: 0, color: course.textColor });
-    }
-  });
+  }, []);
 
-  // Then set expanded card label to expanded state
-  const pos = getLabelPosition(1);
-  if (!pos) return;
-  gsap.set(pos.label, { rotation: 0, x:80, y:180, color: "#ffffff" });
-}, []);
+  // 2. Initial label setup
+  useLayoutEffect(() => {
+    courseCardsData.forEach((course) => {
+      const label = labelElements.current.get(course.id);
+      if (label) {
+        gsap.set(label, { rotation: -90, x: 0, y: 0, color: course.textColor });
+      }
+    });
+
+    const pos = getLabelPosition(1);
+    if (!pos) return;
+    gsap.set(pos.label, { rotation: 0, x: 80, y: 180, color: "#ffffff" });
+  }, []);
+
   const setLabelRef = (id: number) => (el: HTMLDivElement | null) => {
     if (el) labelElements.current.set(id, el);
     else labelElements.current.delete(id);
@@ -95,24 +95,38 @@ useLayoutEffect(() => {
 
     isAnimating.current = true;
 
+    // Update state immediately before animation starts — no mid-flight re-render
+    setExpandedId(courseId);
+
     const tl = gsap.timeline({
       onComplete: () => {
         isAnimating.current = false;
       },
     });
 
-    
+    // Collapse old + expand new at EXACTLY the same time, same duration, same ease
+    // This keeps total row width constant so flexbox never reflows/shifts
     tl.to(
       cardRefs.current[prevIndex],
       {
         width: collapsedWidth.current,
-        duration: 0.5,
+        duration: 0.6,
         ease: "power3.inOut",
       },
       0
     );
 
-    
+    tl.to(
+      cardRefs.current[newIndex],
+      {
+        width: expandedWidth.current,
+        duration: 0.6,
+        ease: "power3.inOut",
+      },
+      0  // same t=0, not 0.25
+    );
+
+    // Old label rotates back to vertical
     if (oldLabel) {
       tl.to(
         oldLabel,
@@ -128,7 +142,7 @@ useLayoutEffect(() => {
       );
     }
 
-    
+    // Old number color fades
     if (oldNumber) {
       tl.to(
         oldNumber,
@@ -140,22 +154,7 @@ useLayoutEffect(() => {
       );
     }
 
-    tl.call(() => {
-      setExpandedId(courseId);
-    }, null, 0.25);
-
-    
-    tl.to(
-      cardRefs.current[newIndex],
-      {
-        width: expandedWidth.current,
-        duration: 0.5,
-        ease: "power3.inOut",
-      },
-      0.25
-    );
-
-    
+    // New label animates to expanded position
     const pos = getLabelPosition(courseId);
     if (pos) {
       tl.fromTo(
@@ -174,18 +173,18 @@ useLayoutEffect(() => {
           duration: 0.5,
           ease: "back.out(0.3)",
         },
-        0.25
+        0.1  // slight delay so label moves after card starts growing
       );
     }
 
-    
+    // New number color to white
     tl.to(
       newNumber,
       {
         color: "#ffffff",
         duration: 0.3,
       },
-      0.4
+      0.2
     );
   };
 
@@ -200,7 +199,7 @@ useLayoutEffect(() => {
           ref={(el) => {
             cardRefs.current[i] = el;
           }}
-          className="shrink-0 overflow-hidden my-auto rounded-3xl h-[350px]"
+          className="shrink-0 my-auto rounded-3xl h-[350px]"
         >
           <CourseCard
             course={course}
@@ -214,4 +213,4 @@ useLayoutEffect(() => {
       ))}
     </div>
   );
-} 
+}

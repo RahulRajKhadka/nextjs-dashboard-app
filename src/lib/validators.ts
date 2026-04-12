@@ -1,6 +1,8 @@
 import { z } from "zod";
+ 
 
-export const postSchema = z.object({
+ 
+export const newPostSchema = z.object({
   title: z
     .string()
     .min(3, "Title must be at least 3 characters")
@@ -8,7 +10,8 @@ export const postSchema = z.object({
   body: z
     .string()
     .min(10, "Body must be at least 10 characters")
-    .max(500, "Body must be under 500 characters"),
+    .max(1000, "Body must be under 1000 characters"),
 });
-
-export type PostFormData = z.infer<typeof postSchema>;
+ 
+export type NewPostFormData = z.infer<typeof newPostSchema>;
+ 

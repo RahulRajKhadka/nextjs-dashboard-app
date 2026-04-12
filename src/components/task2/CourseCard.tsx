@@ -9,18 +9,15 @@ interface Props {
   course: CourseCardType;
   isExpanded: boolean;
   onClick: () => void;
-  direction: "left" | "right";
   isLeftmost?: boolean;
   setLabelRef: (el: HTMLDivElement | null) => void;
   setNumberRef: (el: HTMLDivElement | null) => void;
-  shouldAnimate:boolean;
 }
 
 export default function CourseCard({
   course,
   isExpanded,
   onClick,
-  direction,
   isLeftmost = false,
   setLabelRef,
   setNumberRef,
@@ -32,24 +29,21 @@ export default function CourseCard({
   const expandedViewRef = useRef<HTMLDivElement>(null);
   const circleRef = useRef<HTMLDivElement>(null);
 
-  // Pass refs to parent
   useLayoutEffect(() => {
     setLabelRef(collapsedLabelRef.current);
     setNumberRef(numberRef.current);
   }, [setLabelRef, setNumberRef]);
 
-  
   useLayoutEffect(() => {
     if (!numberRef.current || !circleRef.current) return;
 
     if (isExpanded) {
-      
       const tl = gsap.timeline();
       gsap.set(expandedViewRef.current, { display: "grid" });
 
       tl.to(circleRef.current, {
         clipPath: "circle(0% at 0% 100%)",
-        duration: 0.8,
+        duration: 0.6,
         ease: "power3.inOut",
       }, 0);
 
@@ -58,28 +52,25 @@ export default function CourseCard({
         duration: 0.3,
       }, 0.2);
 
-   if (direction === "right") {
-  
-  tl.to(topbarRef.current, { opacity: 1, x: 0, duration: 0.4 }, 0.3);
-} else {
+      // Topbar always slides in from right, no direction needed
+      tl.fromTo(
+        topbarRef.current,
+        { opacity: 0, x: 40 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" },
+        0.3
+      );
 
-  tl.fromTo(topbarRef.current,
-    { opacity: 1, x: 200 },  
-    { opacity: 1, x: 0, duration: 0.6, ease: "power2.out" }, 
-    0.3
-  );
-}
-
-      const iconsFromX = direction === "left" ? 120 : -120;
-      gsap.set(iconsRef.current, { x: iconsFromX, opacity: 0 });
+      // Icons slide in from right always
+      gsap.set(iconsRef.current, { x: 60, opacity: 0 });
       iconsRef.current.forEach((icon, i) => {
         tl.to(icon, {
           x: 0,
           opacity: 1,
           duration: 0.4,
           ease: "power2.out",
-        }, 0.4 + i * 0.08);
+        }, 0.35 + i * 0.08);
       });
+
     } else {
       const tl = gsap.timeline();
 
@@ -98,7 +89,7 @@ export default function CourseCard({
       tl.set(iconsRef.current, { clearProps: "x,opacity" }, 0.4);
       tl.set(topbarRef.current, { clearProps: "x,y,opacity" }, 0.4);
     }
-  }, [isExpanded, direction, course.textColor]);
+  }, [isExpanded, course.textColor]);
 
   return (
     <div
@@ -113,34 +104,33 @@ export default function CourseCard({
         style={{ backgroundColor: course.bg, clipPath: "circle(150% at 0% 100%)" }}
       />
 
-{/* Label */}
-<div className="absolute top-20 left-0 right-0 z-[3] flex justify-center pt-6 pointer-events-none">
-  <div
-    ref={collapsedLabelRef}
-    className="flex flex-col gap-1"
-    style={{ color: course.textColor , maxWidth: "220px",      
-    width: "max-content" }}
-  >
-    <span className="font-bold text-[20px] ">{course.label}</span>
-    <p className="text-[15px] opacity-60 ">{course.sublabel}</p>
-  </div>
-</div>
+      {/* Label */}
+      <div className="absolute top-20 left-0 right-0 z-[3] flex justify-center pt-6 pointer-events-none">
+        <div
+          ref={collapsedLabelRef}
+          className="flex flex-col gap-1"
+          style={{ color: course.textColor, maxWidth: "220px", width: "max-content" }}
+        >
+          <span className="font-bold text-[20px]">{course.label}</span>
+          <p className="text-[15px] opacity-60">{course.sublabel}</p>
+        </div>
+      </div>
 
-{/* Number  */}
-<div
-  ref={numberRef}
-  className="absolute bottom-0 left-10 z-[3] pb-6 pl-6 pointer-events-none"
-  style={{ color: course.textColor }}
->
-  <div className="flex items-end">
-    <span className="font-black leading-none" style={{ fontSize: "clamp(3.5rem,7vw,5.5rem)" }}>
-      {String(course.count).padStart(2, "0")}
-    </span>
-    <span className="font-black text-3xl mb-2 ml-1">+</span>
-  </div>
-</div>
+      {/* Number */}
+      <div
+        ref={numberRef}
+        className="absolute bottom-0 left-10 z-[3] pb-6 pl-6 pointer-events-none"
+        style={{ color: course.textColor }}
+      >
+        <div className="flex items-end">
+          <span className="font-black leading-none" style={{ fontSize: "clamp(3.5rem,7vw,5.5rem)" }}>
+            {String(course.count).padStart(2, "0")}
+          </span>
+          <span className="font-black text-3xl mb-2 ml-1">+</span>
+        </div>
+      </div>
 
-      {/* EXPANDED VIEW */}
+      {/* Expanded view */}
       <div
         ref={expandedViewRef}
         className="absolute inset-0 z-[2] p-5"

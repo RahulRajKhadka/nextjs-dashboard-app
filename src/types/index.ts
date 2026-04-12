@@ -1,32 +1,40 @@
+xport interface Company {
+  name: string;
+  catchPhrase: string;
+  bs: string;
+}
+ 
+export interface Address {
+  street: string;
+  suite: string;
+  city: string;
+  zipcode: string;
+}
+ 
 export interface User {
   id: number;
   name: string;
   email: string;
+  username: string;
   phone: string;
   website: string;
-  company: {
-    name: string;
-    catchPhrase: string;
-  };
-  address: {
-    city: string;
-    street: string;
-  };
+  company: Company;
+  address: Address;
 }
-
+ 
 export interface Post {
   id: number;
   userId: number;
   title: string;
   body: string;
 }
-
+ 
 export interface NewPost {
   title: string;
   body: string;
 }
 
-// src/types/index.ts
+// Task1 and Task 2
 export interface JourneyCard {
   id: number;
   title: string;
@@ -45,5 +53,5 @@ export interface CourseCard {
   bg: string;
   textColor: string;
   icons?: string[];
-  bgExpanded: string; // ← SVG paths as strings
+  bgExpanded: string; 
 }
